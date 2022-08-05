@@ -1,5 +1,8 @@
 [package]
-name = "crate_name"
+name = "blog_os"
 version = "0.1.0"
 authors = ["Federico Zotti"]
 
+
+[dependencies]
+bootloader = "0.9.8"
