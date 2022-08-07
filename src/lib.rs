@@ -1,14 +1,15 @@
 #![no_std]
 #![cfg_attr(test, no_main)]
-//use custom test framework beacuse no_std
 #![feature(custom_test_frameworks)]
+#![feature(abi_x86_interrupt)]
+#![feature(alloc_error_handler)]
 #![test_runner(crate::test_runner)]
 #![reexport_test_harness_main = "test_main"]
-//ABI of x86_interrupt is unstable
-#![feature(abi_x86_interrupt)]
 
+extern crate alloc;
 use core::panic::PanicInfo;
 
+pub mod allocator;
 pub mod gdt;
 pub mod interrupts;
 pub mod memory;
@@ -21,7 +22,6 @@ pub fn init() {
     unsafe { interrupts::PICS.lock().initialize() };
     x86_64::instructions::interrupts::enable();
 }
-
 pub trait Testable {
     fn run(&self) -> ();
 }
@@ -80,7 +80,7 @@ use bootloader::{entry_point, BootInfo};
 #[cfg(test)]
 entry_point!(test_kernel_main);
 
-/// Entry point for `cargo test`
+/// Entry point for `cargo xtest`
 #[cfg(test)]
 fn test_kernel_main(_boot_info: &'static BootInfo) -> ! {
     init();
@@ -92,4 +92,9 @@ fn test_kernel_main(_boot_info: &'static BootInfo) -> ! {
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     test_panic_handler(info)
+}
+
+#[alloc_error_handler]
+fn alloc_error_handler(layout: alloc::alloc::Layout) -> ! {
+    panic!("allocation error: {:?}", layout)
 }
